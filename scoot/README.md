@@ -10,6 +10,14 @@ A TypeScript + Vite sliding-block puzzle sandbox. Run `npm install`, then `npm r
 - **Place exit** creates an exit on a boundary cell facing the chosen direction. An exit must have a clear straight path into the exterior. Select a marker or its list entry to edit column, row, direction, and width. Drag the marker or use arrow keys to move it; **Remove exit** deletes it. Exit width spans rows for left/right exits and columns for top/bottom exits.
 - Drag blocks in Move blocks mode; edit their dimensions and positions in the inspector.
 
+### Yellow keys
+
+Use **Place key**, then click a playable cell. A yellow key occupies exactly one 1 × 1 floor cell and may sit underneath a block. Choose its **Assigned exit** in Key details. Each key controls one exit, and each controlled exit has one key. Add an exit first if none is available. Select a key from the Yellow keys list (including covered keys) to change its position or exit, or remove it. Arrow keys also reposition a focused key in Build mode. Deleting an exit removes its assigned key; Reset grid removes all keys, blocks, and exits.
+
+Keys act as floor switches: **any red or grey block covering the key opens its assigned exit; uncovering it closes the exit immediately**. A key is never consumed or carried. Exits without keys remain open. Covering a key costs no extra move beyond the block's slide. A red block may escape while it is itself covering the key; the door closes after it leaves. Undo/redo, saved puzzles, import/export, and playback preserve keys and their assignments.
+
+The minimum-move solver checks key coverage at every state, including after an escape. It still minimizes the total moves required for **all** red blocks to leave, and may need to keep a block on a key while other blocks escape.
+
 ## Play
 
 Wide blocks move horizontally, tall blocks vertically, and squares on either axis (one axis per move). Gaps and blocks obstruct movement. Select a red block at a fitting opening, then click its exit. Grey blocks cannot escape. Every red block must escape to win. A slide of any distance counts as one move; each escape also counts as one move.

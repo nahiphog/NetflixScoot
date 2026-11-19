@@ -44,6 +44,36 @@ test('escaping one red block is not success when another cannot escape',()=>{
  assert.equal(canExit(p,p.blocks[0],p.exits[0]),true);
  assert.equal(solvePuzzle(p).status,'unsolvable');
 });
+
+test('solver moves a grey block onto a key before using the locked exit',()=>{
+ const p=board([block('A',2,1),block('G',0,2,1,1,false)]);
+ p.keys=[{id:'K1',x:1,y:2,exitId:'E1'}];
+ const result=check(p,2);assert.equal(result.moves[0].blockId,'G');
+ assert.equal(referenceMinimum(p),2);
+ assert.throws(()=>applySolutionMove(p,{kind:'exit',blockId:'A',from:[2,1],exitId:'E1'}));
+ const pressed=applySolutionMove(p,result.moves[0]);
+ const released=applySolutionMove(pressed,{kind:'slide',blockId:'G',from:[1,2],to:[2,2]});
+ assert.equal(canExit(released,released.blocks[0],released.exits[0]),false);
+});
+
+test('key coverage forces escape ordering for multiple red blocks',()=>{
+ const p=board([block('A',2,1),block('B',0,0)]);
+ p.exits.push({id:'E2',side:'right',x:3,y:0,size:1});
+ p.keys=[{id:'K1',x:2,y:1,exitId:'E2'}];
+ const result=check(p,3);assert.equal(referenceMinimum(p),3);
+ assert.deepEqual(result.moves.filter(m=>m.kind==='exit').map(m=>m.blockId),['B','A']);
+ const tooEarly=applySolutionMove(p,{kind:'exit',blockId:'A',from:[2,1],exitId:'E1'});
+ assert.equal(solvePuzzle(tooEarly).status,'unsolvable');
+});
+
+test('an exiting block can press its own key and overlapping exits select an open door',()=>{
+ const p=board([block('A',2,1)]);p.keys=[{id:'K1',x:2,y:1,exitId:'E1'}];check(p,1);
+ p.keys[0].y=0;
+ assert.equal(solvePuzzle(p).status,'unsolvable');
+ p.exits.push({...p.exits[0],id:'E2'});
+ const result=check(p,1);assert.equal(result.moves[0].kind,'exit');
+ if(result.moves[0].kind==='exit')assert.equal(result.moves[0].exitId,'E2');
+});
 test('squares can change axes but each axis is a separate move',()=>{
  const p=board([block('S',0,0,2,2)]);p.exits[0].y=2;p.exits[0].size=2;check(p,3);
 });

@@ -1,6 +1,31 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {starter,slide,fits,parsePuzzle,canExit,paintCells,validExit,GREY} from './engine';
+import {starter,slide,fits,parsePuzzle,canExit,paintCells,validExit,GREY,keyPressed,exitOpen} from './engine';
+
+test('keys open only their assigned exit while any block covers their cell',()=>{
+ const p=starter();p.keys=[{id:'K1',x:0,y:0,exitId:'E1'}];
+ p.blocks=[{...p.blocks[0],x:4},{...p.blocks[2],x:0,y:1}];
+ assert.equal(exitOpen(p,p.exits[0]),false);assert.equal(canExit(p,p.blocks[0],p.exits[0]),false);
+ p.blocks[1].y=0;
+ assert.equal(keyPressed(p,p.keys[0]),true);assert.equal(canExit(p,p.blocks[0],p.exits[0]),true);
+ p.blocks[1].x=1;
+ assert.equal(exitOpen(p,p.exits[0]),false);
+ p.keys[0].x=4;p.keys[0].y=2;
+ assert.equal(keyPressed(p,p.keys[0]),true); // A red block also presses the key.
+ p.exits.push({id:'E2',side:'left',x:0,y:3,size:1});
+ assert.equal(exitOpen(p,p.exits[1]),true);
+ assert.deepEqual(parsePuzzle(JSON.parse(JSON.stringify(p))),p);
+});
+
+test('keys remain on floor cells, shift with canvas growth, and validate one-to-one exits',()=>{
+ const p=starter();p.keys=[{id:'K1',x:0,y:0,exitId:'E1'}];
+ assert.throws(()=>paintCells(p,[[0,0]],false));
+ const grown=paintCells(p,[[-1,0]],true);assert.equal(grown.keys![0].x,1);
+ assert.deepEqual(parsePuzzle(grown),grown);
+ assert.throws(()=>parsePuzzle({...p,keys:[{...p.keys![0],exitId:'missing'}]}));
+ assert.throws(()=>parsePuzzle({...p,keys:[...p.keys!,{id:'K2',x:1,y:0,exitId:'E1'}]}));
+ assert.throws(()=>parsePuzzle({...p,keys:[{...p.keys![0],x:9}]}));
+});
 test('starter validates and all non-targets are grey',()=>{const p=starter();assert.deepEqual(parsePuzzle(p),p);assert.ok(p.blocks.filter(b=>!b.target).every(b=>b.color===GREY));});
 test('movement respects axes, blockers, and missing cells',()=>{const p=starter();assert.equal(slide(p,p.blocks[0],5,4).x,0);assert.equal(slide(p,p.blocks[1],4,1).x,2);p.blocks=[p.blocks[0]];p.cells=p.cells.filter(c=>c!=='3,2');assert.equal(slide(p,p.blocks[0],4,2).x,1);assert.equal(fits(p,{...p.blocks[0],x:3}),false);});
 test('multiple targets survive validation and exit independently',()=>{const p=starter();p.blocks=[{...p.blocks[0],x:4},{...p.blocks[2],target:true}];assert.equal(parsePuzzle(p).blocks.filter(b=>b.target).length,2);assert.equal(canExit(p,p.blocks[0],p.exits[0]),true);assert.equal(canExit(p,p.blocks[1],p.exits[0]),false);assert.equal(canExit(p,{...p.blocks[0],target:false},p.exits[0]),false);});

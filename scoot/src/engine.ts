@@ -1,7 +1,8 @@
 export type Side = 'left' | 'right' | 'top' | 'bottom';
 export interface Block { id:string; x:number; y:number; w:number; h:number; color:string; target:boolean }
 export interface Exit { id:string; x:number; y:number; side:Side; size:number }
-export interface Puzzle { cols:number; rows:number; cells:string[]; exits:Exit[]; blocks:Block[] }
+export interface Key { id:string; x:number; y:number; exitId:string }
+export interface Puzzle { cols:number; rows:number; cells:string[]; exits:Exit[]; blocks:Block[]; keys?:Key[] }
 export const GREY='#adb1b5';
 export const clone=<T>(v:T):T=>structuredClone(v);
 export const cellKey=(x:number,y:number)=>`${x},${y}`;
@@ -39,8 +40,15 @@ export function validExit(p:Puzzle,e:Exit){
  }
  return true;
 }
+export function keyPressed(p:Puzzle,key:Key){
+ return p.blocks.some(b=>key.x>=b.x&&key.x<b.x+b.w&&key.y>=b.y&&key.y<b.y+b.h);
+}
+export function exitOpen(p:Puzzle,e:Exit){
+ const key=p.keys?.find(k=>k.exitId===e.id);
+ return !key||keyPressed(p,key);
+}
 export function canExit(p:Puzzle,b:Block,e:Exit){
- if(!b.target||!validExit(p,e))return false;
+ if(!b.target||!validExit(p,e)||!exitOpen(p,e))return false;
  if(e.side==='right'||e.side==='left')return b.w>=b.h&&b.y>=e.y&&b.y+b.h<=e.y+e.size&&(e.side==='right'?b.x+b.w-1===e.x:b.x===e.x);
  return b.h>=b.w&&b.x>=e.x&&b.x+b.w<=e.x+e.size&&(e.side==='bottom'?b.y+b.h-1===e.y:b.y===e.y);
 }
@@ -52,6 +60,8 @@ export function paintCells(p:Puzzle,points:[number,number][],add:boolean):Puzzle
  next.cols=Math.max(p.cols+ox,Math.max(...coords.map(c=>c[0]))+ox+1);next.rows=Math.max(p.rows+oy,Math.max(...coords.map(c=>c[1]))+oy+1);
  if(next.cols>16||next.rows>16)throw Error('The canvas can be at most 16 × 16 cells.');
  next.cells=coords.map(([x,y])=>cellKey(x+ox,y+oy));next.blocks.forEach(b=>{b.x+=ox;b.y+=oy;});next.exits.forEach(e=>{e.x+=ox;e.y+=oy;});
+ next.keys?.forEach(k=>{k.x+=ox;k.y+=oy;});
+ if(next.keys?.some(k=>!next.cells.includes(cellKey(k.x,k.y))))throw Error('Move or remove the key before erasing its cell.');
  if(next.blocks.some(b=>!fits(next,b)))throw Error('Move the block before erasing its cells.');
  if(next.exits.some(e=>!validExit(next,e)))throw Error('Move or remove the exit before changing its path.');
  return next;
@@ -71,5 +81,13 @@ export function parsePuzzle(raw:unknown):Puzzle{
  const ids=new Set<string>();for(const b of p.blocks){if(!b||typeof b.id!=='string'||! /^[A-Za-z0-9_-]{1,12}$/.test(b.id)||ids.has(b.id)||!int(b.x,0,15)||!int(b.y,0,15)||!int(b.w,1,p.cols)||!int(b.h,1,p.rows)||typeof b.target!=='boolean'||!fits(p,b))throw Error('Blocks must occupy existing cells without overlapping.');ids.add(b.id);b.color=b.target?'#db655d':GREY;}
  if(!Array.isArray(p.exits)||p.exits.length>256)throw Error('Invalid exits.');ids.clear();
  for(const e of p.exits){if(!e||typeof e.id!=='string'||!/^[A-Za-z0-9_-]{1,12}$/.test(e.id)||ids.has(e.id)||!int(e.x,0,p.cols-1)||!int(e.y,0,p.rows-1)||!validExit(p,e))throw Error('Exits must face an unobstructed exterior edge.');ids.add(e.id);}
- return {cols:p.cols,rows:p.rows,cells:p.cells,exits:p.exits,blocks:p.blocks};
+ if(p.keys!==undefined){
+  if(!Array.isArray(p.keys)||p.keys.length>256)throw Error('Invalid keys.');
+  const keyIds=new Set<string>(),positions=new Set<string>(),doors=new Set<string>();
+  for(const k of p.keys){
+   if(!k||typeof k.id!=='string'||!/^[A-Za-z0-9_-]{1,12}$/.test(k.id)||keyIds.has(k.id)||!int(k.x,0,p.cols-1)||!int(k.y,0,p.rows-1)||!p.cells.includes(cellKey(k.x,k.y))||positions.has(cellKey(k.x,k.y))||!p.exits.some(e=>e.id===k.exitId)||doors.has(k.exitId))throw Error('Each key needs its own cell and a different existing exit.');
+   keyIds.add(k.id);positions.add(cellKey(k.x,k.y));doors.add(k.exitId);
+  }
+ }
+ return {cols:p.cols,rows:p.rows,cells:p.cells,exits:p.exits,blocks:p.blocks,...(p.keys?{keys:p.keys}:{})};
 }
