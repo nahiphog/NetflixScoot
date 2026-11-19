@@ -30,6 +30,20 @@ test('all red blocks must escape, including when one initially blocks another',(
  const p=board([block('A',0,1),block('B',2,1)]);check(p,3);
  const q=board([block('A',0,0),block('B',0,1)]);q.exits[0].y=0;q.exits[0].size=2;check(q,4);
 });
+
+test('three red blocks must all escape with a globally minimal route',()=>{
+ const p=board([block('A',0,0),block('B',0,1),block('C',0,2)]);
+ p.exits[0].y=0;p.exits[0].size=3;
+ const result=check(p,6);
+ assert.equal(result.moves.filter(m=>m.kind==='exit').length,3);
+ assert.equal(result.moves.length,referenceMinimum(p));
+});
+
+test('escaping one red block is not success when another cannot escape',()=>{
+ const p=board([block('A',2,1),block('B',0,0)]);
+ assert.equal(canExit(p,p.blocks[0],p.exits[0]),true);
+ assert.equal(solvePuzzle(p).status,'unsolvable');
+});
 test('squares can change axes but each axis is a separate move',()=>{
  const p=board([block('S',0,0,2,2)]);p.exits[0].y=2;p.exits[0].size=2;check(p,3);
 });

@@ -95,6 +95,24 @@ function solutionPreview(cols:number,rows:number){
  <svg class="move-arrow" viewBox="0 0 ${cols} ${rows}" preserveAspectRatio="none" aria-hidden="true"><defs><marker id="move-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#263e1d"/></marker></defs><line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#ffffff" stroke-width="0.10"/><line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#263e1d" stroke-width="0.045" marker-end="url(#move-arrowhead)"/></svg>
  </div>`;
 }
+function boardPerimeter(cols:number,rows:number,pad:number){
+ const cells=new Set(puzzle.cells),open=new Set<string>();
+ for(const e of puzzle.exits)for(let i=0;i<e.size;i++){
+  const horizontal=e.side==='left'||e.side==='right';
+  open.add(`${e.x+(horizontal?0:i)},${e.y+(horizontal?i:0)},${e.side}`);
+ }
+ const segments:string[]=[];
+ for(const cell of cells){
+  const [x,y]=cell.split(',').map(Number),px=x+pad,py=y+pad;
+  const edges:[Side,number,number,number,number,number,number][]=[
+   ['left',-1,0,px,py,px,py+1],['right',1,0,px+1,py,px+1,py+1],
+   ['top',0,-1,px,py,px+1,py],['bottom',0,1,px,py+1,px+1,py+1]
+  ];
+  for(const [side,dx,dy,x1,y1,x2,y2] of edges)
+   if(!cells.has(cellKey(x+dx,y+dy))&&!open.has(`${x},${y},${side}`))segments.push(`M${x1} ${y1}L${x2} ${y2}`);
+ }
+ return `<svg class="board-perimeter" viewBox="0 0 ${cols} ${rows}" preserveAspectRatio="none" aria-hidden="true"><path d="${segments.join(' ')}" vector-effect="non-scaling-stroke"/></svg>`;
+}
 function render(){
  const focusedId=(document.activeElement as HTMLElement|null)?.id;
  const focusedSpeed=(document.activeElement as HTMLElement|null)?.dataset.speed;
@@ -116,6 +134,7 @@ function render(){
  ${Array.from({length:cols*rows},(_,i)=>{const x=i%cols-pad,y=Math.floor(i/cols)-pad,active=cellSet.has(cellKey(x,y));return `<button class="cell ${active?'':'void'}" data-cell="${x},${y}" aria-label="${active?'Cell':'Empty cell'} column ${x+1}, row ${y+1}" ${mode!=='build'?'disabled':''}>${!active&&mode==='build'?'+':''}</button>`;}).join('')}
  ${puzzle.blocks.map(block=>`<button class="block ${selected===block.id?'selected':''} ${block.target?'target':''}" data-block="${block.id}" aria-label="Block ${block.id}${block.target?', red target':''}, ${block.w} by ${block.h}, column ${block.x+1}, row ${block.y+1}" style="left:calc(${block.x+pad}/var(--cols)*100% + 5px);top:calc(${block.y+pad}/var(--rows)*100% + 5px);width:calc(${block.w}/var(--cols)*100% - 10px);height:calc(${block.h}/var(--rows)*100% - 10px);--block-color:${block.target?'#db655d':GREY}"><span class="block-id">${block.id}${block.target?' ★':''}</span><span class="block-direction">${block.w>block.h?'↔':block.h>block.w?'↕':'✥'}</span></button>`).join('')}
  ${puzzle.exits.map(e=>{const h=e.side==='left'||e.side==='right';return `<button class="path-marker ${selectedExit===e.id?'chosen':''}" data-exit="${e.id}" aria-label="Exit ${e.id}, ${e.side}, column ${e.x+1}, row ${e.y+1}, width ${e.size}" style="left:${(e.x+pad+(e.side==='right'?1:0))/cols*100}%;top:${(e.y+pad+(e.side==='bottom'?1:0))/rows*100}%;width:${h?'18px':e.size/cols*100+'%'};height:${h?e.size/rows*100+'%':'18px'};transform:${h?'translateX(-50%)':'translateY(-50%)'}">${arrows[e.side]}</button>`;}).join('')}
+ ${boardPerimeter(cols,rows,pad)}
  ${solutionPreview(cols,rows)}
  </div></div>${mode==='solution'&&solution?.moves[solution.step]?`<div class="preview-legend"><span class="ghost-key" aria-hidden="true"></span><span><strong>Next move:</strong> ${describeMove(solution.moves[solution.step])}<small>${solution.moves[solution.step].kind==='exit'?'Dashed shape shows the block leaving the grid.':'Dashed shape = destination. Solid outlined block = starting position.'}</small></span></div>`:''}<div class="board-hint">${mode==='solution'?'Watch with Autoplay or inspect each move with the step controls.':won?'Every red block escaped. Puzzle complete!':mode==='build'?tool==='select'?'Drag to move · Select to edit':'Click or drag cells using your selected tool':`${puzzle.blocks.filter(b=>b.target).length} red blocks remaining · Select a red block, then its exit`}</div><div class="board-bottom"><div class="history"><button id="undo" aria-label="Undo" ${undo.length?'':'disabled'}>↶</button><button id="redo" aria-label="Redo" ${redo.length?'':'disabled'}>↷</button><button id="reset" aria-label="Reset play session" ${mode==='build'?'disabled':''}>↻</button></div><div class="move-count"><strong>${String(moves).padStart(2,'0')}</strong> moves</div></div></section>
  <aside class="panel inspector"><h2>${exit?'Exit details':'Block details'}</h2><p class="muted">Select a block or an exit to edit it.</p>
