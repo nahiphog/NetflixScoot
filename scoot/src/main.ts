@@ -125,7 +125,7 @@ function render(){
  const k=puzzle.keys?.find(k=>k.id===selectedKey),b=puzzle.blocks.find(b=>b.id===selected),exit=puzzle.exits.find(e=>e.id===selectedExit),painting=mode==='build'&&tool!=='select',pad=mode==='build'?1:0,cols=puzzle.cols+pad*2,rows=puzzle.rows+pad*2;
  const cellSet=new Set(puzzle.cells);
  const fields=(items:[string,string,number,number][],attr:string)=>items.map(([key,label,value,max])=>`<label>${label}<input ${attr}="${key}" type="number" min="1" max="${max}" value="${value}" ${disabled()}></label>`).join('');
- root.innerHTML=`<header><a class="brand" href="./" aria-label="Netflix's Scoot home"><span class="logo">▰<i>▰</i></span><span><small>NETFLIX'S</small><strong>scoot<span>.</span></strong></span></a><div class="header-label">A LITTLE SPACE. A LOT OF POSSIBILITIES.</div><button class="quiet" id="how">How to play</button></header>
+ root.innerHTML=`<header><a class="brand" href="./" aria-label="Netflix's Scoot home"><span class="logo">▰<i>▰</i></span><span><small>NETFLIX'S</small><strong>scoot<span>.</span></strong></span></a><button class="quiet" id="how">How to play</button></header>
  <main><div class="intro intro-actions"><button id="example" class="secondary">Load example</button></div>
  <div class="workspace"><aside class="panel settings"><div class="panel-title"><h2>Your playground</h2></div><p class="muted">Build a board that’s entirely yours.</p>
  <div class="field-title">CANVAS SIZE <span>4–16 cells</span></div><div class="two-fields">${fields([['cols','Columns',puzzle.cols,16],['rows','Rows',puzzle.rows,16]],'data-grid')}</div>
