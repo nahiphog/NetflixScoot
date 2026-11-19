@@ -127,7 +127,7 @@ function render(){
  const fields=(items:[string,string,number,number][],attr:string)=>items.map(([key,label,value,max])=>`<label>${label}<input ${attr}="${key}" type="number" min="1" max="${max}" value="${value}" ${disabled()}></label>`).join('');
  root.innerHTML=`<header><a class="brand" href="./" aria-label="Netflix's Scoot home"><span class="logo">▰<i>▰</i></span><span><small>NETFLIX'S</small><strong>scoot<span>.</span></strong></span></a><button class="quiet" id="how">How to play</button></header>
  <main><div class="intro intro-actions"><button id="example" class="secondary">Load example</button></div>
- <div class="workspace"><aside class="panel settings"><div class="panel-title"><h2>Your playground</h2></div><p class="muted">Build a board that’s entirely yours.</p>
+ <div class="workspace"><aside class="panel settings"><div class="panel-title"><h2>Your playground</h2></div>
  <div class="field-title">CANVAS SIZE <span>4–16 cells</span></div><div class="two-fields">${fields([['cols','Columns',puzzle.cols,16],['rows','Rows',puzzle.rows,16]],'data-grid')}</div>
  <p class="muted">Resize the canvas, then draw cells in the empty space.</p>
  <div class="field-title">BOARD TOOLS</div><div class="tool-grid">${(['select','draw','erase','exit','key'] as Tool[]).map(t=>`<button data-tool="${t}" aria-pressed="${tool===t}" class="${tool===t?'active':''}" ${disabled()}>${{select:'Move blocks',draw:'Draw cells',erase:'Erase cells',exit:'Place exit',key:'Place key'}[t]}</button>`).join('')}</div>
