@@ -2,7 +2,7 @@ import './style.css';
 import {applySolutionMove,describeMove,SEARCH_LIMITS,type SolutionMove,type SearchProgress,type SearchResult} from './solver';
 import type {SolverMessage} from './solver.worker';
 import {Autoplay,PLAYBACK_SPEEDS} from './autoplay';
-import {type Puzzle,type Block,type Exit,type Side,starter,GREY,clone,fits,slide,canExit,parsePuzzle,cellKey,validExit,paintCells} from './engine';
+import {type Puzzle,type Block,type Exit,type Side,starter,GREY,clone,fits,slide,canExit,parsePuzzle,cellKey,validExit,paintCells,rectangle} from './engine';
 const root=document.querySelector<HTMLDivElement>('#app')!;
 type Tool='select'|'draw'|'erase'|'exit';
 let puzzle=starter(),mode:'build'|'play'|'solution'='build',tool:Tool='select',selected='A',selectedExit='',moves=0,won=false,baseline:Puzzle|null=null,newRed=false,exitSide:Side='right';
@@ -94,7 +94,7 @@ function render(){
  <p class="muted">${tool==='draw'?'Click or drag empty cells, including the dotted border, to grow your board.':tool==='erase'?'Click or drag to erase empty cells. Blocks and exits are protected.':tool==='exit'?'Choose a direction, then click an exterior cell edge.':'Drag blocks or exits. Select either to edit its details.'}</p>
  <label class="exit-direction">New exit direction<select id="new-exit-side" ${disabled()}>${sideOptions(exitSide)}</select></label>
  <div class="field-title">EXIT PATHS <span>${puzzle.exits.length}</span></div><div class="exit-list">${puzzle.exits.map(e=>`<button data-select-exit="${e.id}" class="${e.id===selectedExit?'active':''}">${e.id} · ${e.side} · (${e.x+1}, ${e.y+1})</button>`).join('')||'<p class="muted">Use Place exit to add a path.</p>'}</div>
- <div class="divider"></div><div class="field-title">ADD A BLOCK</div><label class="target-toggle"><input id="new-red" type="checkbox" ${newRed?'checked':''} ${disabled()}>Add as a red block</label><div class="shapes"><button data-add="2,1" ${disabled()}><span class="shape horizontal"></span>Horizontal</button><button data-add="1,2" ${disabled()}><span class="shape vertical"></span>Vertical</button><button data-add="2,2" ${disabled()}><span class="shape square"></span>Square</button></div><button id="clear" class="text-button" ${disabled()}>Remove all blocks</button></aside>
+ <div class="divider"></div><div class="field-title">ADD A BLOCK</div><label class="target-toggle"><input id="new-red" type="checkbox" ${newRed?'checked':''} ${disabled()}>Add as a red block</label><div class="shapes"><button data-add="2,1" ${disabled()}><span class="shape horizontal"></span>Horizontal</button><button data-add="1,2" ${disabled()}><span class="shape vertical"></span>Vertical</button><button data-add="2,2" ${disabled()}><span class="shape square"></span>Square</button></div><button id="clear" class="text-button" ${disabled()}>Remove all blocks</button><button id="reset-grid" class="secondary reset-grid-button" ${disabled()}>Reset grid</button><p class="muted">Start fresh with an empty 5 × 5 grid. Removes all blocks and exits.</p></aside>
  <section class="board-panel">${solverPanel()}<div class="board-toolbar"><div class="segmented"><button id="build" class="${mode==='build'?'active':''}">Build</button><button id="play" class="${mode==='play'?'active':''}">Play</button></div><span class="saved">Saved on this device</span></div><div class="board-caption"><span>${mode==='solution'?'SOLUTION PLAYBACK':mode==='build'?'SHAPE YOUR NEXT CHALLENGE':'GET EVERY RED BLOCK OUT'}</span><span>${puzzle.cells.length} cells</span></div>
  <div class="board-wrap"><div class="board custom-board ${painting?'painting':''}" id="board" style="--cols:${cols};--rows:${rows};aspect-ratio:${cols}/${rows}">
  ${Array.from({length:cols*rows},(_,i)=>{const x=i%cols-pad,y=Math.floor(i/cols)-pad,active=cellSet.has(cellKey(x,y));return `<button class="cell ${active?'':'void'}" data-cell="${x},${y}" aria-label="${active?'Cell':'Empty cell'} column ${x+1}, row ${y+1}" ${mode!=='build'?'disabled':''}>${!active&&mode==='build'?'+':''}</button>`;}).join('')}
@@ -135,6 +135,7 @@ function bind(pad:number,cols:number,rows:number){
 
  on('how',()=>{autoplay.pause();document.querySelector<HTMLDialogElement>('#help')!.showModal();});on('close-help',()=>document.querySelector<HTMLDialogElement>('#help')!.close());on('example',()=>newPuzzle(starter()));
  on('clear',()=>change(()=>{puzzle.blocks=[];selected='';}));
+ on('reset-grid',()=>change(()=>{puzzle={cols:5,rows:5,cells:rectangle(5,5),blocks:[],exits:[]};selected='';selectedExit='';tool='select';baseline=null;moves=0;won=false;newRed=false;exitSide='right';}));
  on('build',()=>{if(mode==='solution'){returnFromSolution(true);return;}if(mode==='build')return;newPuzzle(clone(baseline??puzzle));});
  on('play',()=>{if(mode==='play')return;if(!puzzle.blocks.some(b=>b.target)||!puzzle.exits.length){toast('Add at least one red block and one exit before playing.');return;}invalidateSolver();baseline=clone(puzzle);mode='play';tool='select';selectedExit='';moves=0;won=false;undo=[];redo=[];render();});
  on('reset',()=>{if(baseline)change(()=>{puzzle=clone(baseline!);moves=0;won=false;});});

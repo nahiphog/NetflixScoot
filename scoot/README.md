@@ -4,6 +4,7 @@ A TypeScript + Vite sliding-block puzzle sandbox. Run `npm install`, then `npm r
 
 ## Build
 
+- **Reset grid** removes all blocks and exits and restores a complete, empty 5 × 5 grid. The reset is saved locally and can be undone. **Remove all blocks** only clears blocks, preserving the existing grid and exits.
 - All non-target blocks are grey. Check **Add as a red block** before adding a shape, or toggle **Red target block** on any existing block. Multiple targets are supported.
 - **Draw cells** paints playable space. Drag across the dotted border to grow the canvas on any edge, up to 16 × 16. Canvas resizing creates empty space to draw into. **Erase cells** makes holes or irregular boundaries. Occupied cells and existing exit routes are protected; move or remove the block/exit first.
 - **Place exit** creates an exit on a boundary cell facing the chosen direction. An exit must have a clear straight path into the exterior. Select a marker or its list entry to edit column, row, direction, and width. Drag the marker or use arrow keys to move it; **Remove exit** deletes it. Exit width spans rows for left/right exits and columns for top/bottom exits.
