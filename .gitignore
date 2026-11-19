@@ -1,0 +1,5 @@
+.sites-local/
+**/node_modules/
+**/dist/
+**/.openai/
+**/.sites-local/
